@@ -1,0 +1,1 @@
+web: java -jar ./target/ckidtech-srvc-appuser-0.0.1-SNAPSHOT.jar --spring.profiles.active=sit --server.port=$PORT
