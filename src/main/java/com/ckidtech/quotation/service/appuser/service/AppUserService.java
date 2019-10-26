@@ -16,8 +16,10 @@ import org.springframework.stereotype.Service;
 import com.ckidtech.quotation.service.core.controller.MessageController;
 import com.ckidtech.quotation.service.core.controller.QuotationResponse;
 import com.ckidtech.quotation.service.core.dao.AppUserRepository;
+import com.ckidtech.quotation.service.core.dao.VendorRepository;
 import com.ckidtech.quotation.service.core.exception.ServiceAccessResourceFailureException;
 import com.ckidtech.quotation.service.core.model.AppUser;
+import com.ckidtech.quotation.service.core.model.Vendor;
 import com.ckidtech.quotation.service.core.security.UserRole;
 import com.ckidtech.quotation.service.core.utils.Util;
 
@@ -30,6 +32,9 @@ public class AppUserService {
 
 	@Autowired
 	private AppUserRepository appUserRepository;
+	
+	@Autowired
+	private VendorRepository vendorRepository;
 	
 	@Autowired
 	private MessageController msgController;
@@ -52,7 +57,7 @@ public class AppUserService {
 	public List<AppUser> adminFindAllAppUsers(AppUser loginUser) {
 
 		LOG.log(Level.INFO, "Calling AppUser Service adminFindAllAppUsers()");		
-		Pageable pageable = new PageRequest(0, 100, Sort.Direction.ASC, "role, name");
+		Pageable pageable = new PageRequest(0, 1000, Sort.Direction.ASC, "role, name");
 		List<AppUser> listAppUser = appUserRepository.adminSearchByName(loginUser.getApp(), "", pageable);
 		for(AppUser appUser : listAppUser) {
 			appUser.setPassword("[PROTECTED]");
@@ -69,7 +74,7 @@ public class AppUserService {
 	public List<AppUser> adminSearchAppUsers(AppUser loginUser, String name) {
 
 		LOG.log(Level.INFO, "Calling AppUser Service adminSearchAppUsers()");	
-		Pageable pageable = new PageRequest(0, 100, Sort.Direction.ASC, "vendor, role, name");
+		Pageable pageable = new PageRequest(0, 1000, Sort.Direction.ASC, "vendor, role, name");
 		List<AppUser> listAppUser = appUserRepository.adminSearchByName(loginUser.getApp(), name, pageable);
 		for(AppUser appUser : listAppUser) {
 			appUser.setPassword("[PROTECTED]");
@@ -101,7 +106,7 @@ public class AppUserService {
 		
 		Util.checkIfAlreadyActivated(loginUser);
 		
-		Pageable pageable = new PageRequest(0, 100, Sort.Direction.ASC, "name");
+		Pageable pageable = new PageRequest(0, 1000, Sort.Direction.ASC, "name");
 		List<AppUser> listAppUser = appUserRepository.vendorFindAllAppUsers(loginUser.getApp(), loginUser.getObjectRef(), pageable);
 		for(AppUser appUser : listAppUser) {
 			appUser.setPassword("[PROTECTED]");
@@ -122,7 +127,7 @@ public class AppUserService {
 		
 		Util.checkIfAlreadyActivated(loginUser);
 		
-		Pageable pageable = new PageRequest(0, 100, Sort.Direction.ASC, "name");
+		Pageable pageable = new PageRequest(0, 1000, Sort.Direction.ASC, "name");
 		List<AppUser> listAppUser = appUserRepository.vendorSearchByName(loginUser.getApp(), loginUser.getObjectRef(), name, pageable);
 		for(AppUser appUser : listAppUser) {
 			appUser.setPassword("[PROTECTED]");
@@ -165,11 +170,35 @@ public class AppUserService {
 			appUser.setUsername(appUser.getUsername().toUpperCase());
 			
 			// Check if same UserName, App and Environment exists. For Admin user only UserName and App is checked			
-			Pageable pageable = new PageRequest(0, 100, Sort.Direction.ASC, "name");
+			Pageable pageable = new PageRequest(0, 1000, Sort.Direction.ASC, "name");
 			List<AppUser> appUsers = appUserRepository.adminFindByAppAndUserName(loginUser.getApp(), appUser.getUsername(), pageable);
-			if ( appUsers.size()>0) {	
+			if ( appUsers.size()>0 ) {	
 				quotation.addMessage(msgController.createMsg("error.AUAEE"));
 			}
+			
+			String vendorId = "";
+			if ( UserRole.VENDOR_ADMIN.equals(loginUser.getRole()) ) {
+				vendorId = loginUser.getObjectRef();			
+				Vendor vendor = vendorRepository.findById(vendorId).orElse(null);
+				if ( vendor == null) {
+					quotation.addMessage(msgController.createMsg("error.VNFE"));
+				} else {
+					if ( !vendor.isActiveIndicator() ) {
+						quotation.addMessage(msgController.createMsg("error.VNYAE"));
+					} else {
+						
+						// Verify if exceed maximum limit						
+						int appUserCount = appUserRepository.vendorFindAllAppUsers(loginUser.getApp(), vendorId, pageable).size();		
+						//LOG.log(Level.INFO, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:appUserCount=" + appUserCount + ", getMaxUserAllowed=" + vendor.getMaxUserAllowed());
+						if ( appUserCount >= vendor.getMaxUserAllowed() ) {
+							quotation.addMessage(msgController.createMsg("error.AUEML", vendor.getMaxUserAllowed()));								
+						}						
+					}	
+				}
+			} else {
+				vendorId = appUser.getObjectRef();
+			}
+			
 			
 			if( quotation.getMessages().isEmpty() ) {
 				
@@ -179,10 +208,8 @@ public class AppUserService {
 				appUser.setPassword(encoder.encode(appUser.getPassword())); //encode password				
 				appUser.setRole(appUser.getRole());
 				appUser.setActiveIndicator(false);
-				appUser.setApp(loginUser.getApp());				
-				if ( !UserRole.APP_ADMIN.equals(loginUser.getRole()) ) {
-					appUser.setObjectRef(loginUser.getObjectRef());
-				}	
+				appUser.setApp(loginUser.getApp());
+				appUser.setObjectRef(vendorId);
 				
 				Util.initalizeCreatedInfo(appUser, loginUser.getUsername(), msgController.getMsg("info.AURC"));					
 				appUserRepository.save(appUser);
@@ -419,7 +446,7 @@ public class AppUserService {
 		Util.checkIfAlreadyActivated(loginUser);
 		
 		LOG.log(Level.INFO, "Calling AppUser Service deActivateAllAppUser()");		
-		Pageable pageable = new PageRequest(0, 100, Sort.Direction.ASC, "name");
+		Pageable pageable = new PageRequest(0, 1000, Sort.Direction.ASC, "name");
 		List<AppUser> listAppUser = appUserRepository.vendorFindAllAppUsers(loginUser.getApp(), vendor, pageable);
 		for(AppUser appUser : listAppUser) {
 			deActivateAppUser(loginUser, appUser.getId());
@@ -438,7 +465,7 @@ public class AppUserService {
 		Util.checkIfAlreadyActivated(loginUser);
 
 		LOG.log(Level.INFO, "Calling AppUser Service deActivateAllAppUser()");		
-		Pageable pageable = new PageRequest(0, 100, Sort.Direction.ASC, "name");
+		Pageable pageable = new PageRequest(0, 1000, Sort.Direction.ASC, "name");
 		List<AppUser> listAppUser = appUserRepository.vendorFindAllAppUsers(loginUser.getApp(), vendor, pageable);
 		for(AppUser appUser : listAppUser) {
 			deleteAppUser(loginUser, appUser.getId());

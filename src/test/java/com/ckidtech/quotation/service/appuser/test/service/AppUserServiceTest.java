@@ -37,8 +37,9 @@ public class AppUserServiceTest {
 	
 	public static AppUser MAIN_ADMIN = new AppUser("MAIN_ADMIN", "testpass", "Administrator", UserRole.APP_ADMIN, "VendorHub", "");
 	public static AppUser ADMIN_USER = new AppUser("ADMIN", "testpass", "Administrator", UserRole.APP_ADMIN, "VendorHub", "");
-	public static Vendor TEST_VENDOR1 = new Vendor("Test Vendor 1", "imagelink");
-	public static Vendor TEST_VENDOR2 = new Vendor("Test Vendor 2", "imagelink");
+	public static Vendor TEST_VENDOR = new Vendor("TEST_VENDOR", "Test Vendor", "imagelink", 2, 2, 2, 2);
+	public static Vendor TEST_VENDOR1 = new Vendor("TEST_VENDOR1", "Test Vendor 1", "imagelink", 2, 2, 2, 2);
+	public static Vendor TEST_VENDOR2 = new Vendor("TEST_VENDOR2", "Test Vendor 2", "imagelink", 2, 2, 2, 2);
 	
 	@Before
 	public  void initTest() {		
@@ -46,6 +47,9 @@ public class AppUserServiceTest {
 		MAIN_ADMIN.setActiveIndicator(true);
 		
 		vendorRepository.deleteAll();
+		
+		TEST_VENDOR.setActiveIndicator(true);
+		vendorRepository.save(TEST_VENDOR);
 		
 		TEST_VENDOR1.setActiveIndicator(true);
 		vendorRepository.save(TEST_VENDOR1);
@@ -79,8 +83,10 @@ public class AppUserServiceTest {
 	@Test
 	public void adminSearchAppUsersTest() {
 		
-		appUserService.addAppUser(MAIN_ADMIN, ADMIN_USER);
-		ADMIN_USER = appUserService.activateAppUser(MAIN_ADMIN, ADMIN_USER.getId()).getAppUser();
+		QuotationResponse response = appUserService.addAppUser(MAIN_ADMIN, ADMIN_USER);
+		response = appUserService.activateAppUser(MAIN_ADMIN, ADMIN_USER.getId());	
+		ADMIN_USER = response.getAppUser();
+		
 		appUserService.addAppUser(ADMIN_USER, new AppUser("TEST_VENDOR1_ADMIN", "password", "Vendor Admin", UserRole.VENDOR_ADMIN, "VendorHub", "TEST_VENDOR1"));
 		appUserService.addAppUser(ADMIN_USER, new AppUser("TEST_VENDOR1_USER", "password", "Vendor User", UserRole.VENDOR_USER, "VendorHub", "TEST_VENDOR1"));
 		
@@ -115,8 +121,12 @@ public class AppUserServiceTest {
 	public void vendorSearchAppUsersTest() {
 		
 		AppUser appUserVendor1Admin = new AppUser("TEST_VENDOR1_ADMIN", "password", "Vendor Admin", UserRole.VENDOR_ADMIN, "VendorHub", "TEST_VENDOR1");
-		appUserVendor1Admin = appUserService.addAppUser(MAIN_ADMIN, appUserVendor1Admin).getAppUser();
-		appUserVendor1Admin = appUserService.activateAppUser(MAIN_ADMIN, appUserVendor1Admin.getId()).getAppUser();
+		
+		QuotationResponse response = appUserService.addAppUser(MAIN_ADMIN, appUserVendor1Admin);
+		appUserVendor1Admin = response.getAppUser();
+		
+		response = appUserService.activateAppUser(MAIN_ADMIN, appUserVendor1Admin.getId());
+		appUserVendor1Admin =  response.getAppUser();
 		
 		appUserService.addAppUser(MAIN_ADMIN, new AppUser("TEST_VENDOR1_USER", "password", "Vendor User", UserRole.VENDOR_USER, "VendorHub", "TEST_VENDOR1"));
 		
@@ -232,11 +242,14 @@ public class AppUserServiceTest {
 	public void activateAppUserTest() {
 		
 		AppUser appUserVendorAdmin = new AppUser("TEST_VENDOR1_ADMIN", "password", "Vendor 1 Admin", UserRole.VENDOR_ADMIN, "VendorHub", "TEST_VENDOR");
-		appUserVendorAdmin = appUserService.addAppUser(MAIN_ADMIN, appUserVendorAdmin).getAppUser();
+		
+		QuotationResponse response = appUserService.addAppUser(MAIN_ADMIN, appUserVendorAdmin);appUserVendorAdmin = response.getAppUser();
 		appUserVendorAdmin = appUserService.activateAppUser(MAIN_ADMIN, appUserVendorAdmin.getId()).getAppUser();
 		
-		AppUser appUserVendorUser = new AppUser("TEST_VENDOR1_USER", "password", "Vendor 2 User", UserRole.VENDOR_USER, "VendorHub", "TEST_VENDOR");		
-		appUserVendorUser = appUserService.addAppUser(MAIN_ADMIN, appUserVendorUser).getAppUser();
+		AppUser appUserVendorUser = new AppUser("TEST_VENDOR1_USER", "password", "Vendor 2 User", UserRole.VENDOR_USER, "VendorHub", "TEST_VENDOR");	
+		
+		response = appUserService.addAppUser(MAIN_ADMIN, appUserVendorUser);
+		appUserVendorUser = response.getAppUser();
 		
 		
 		assertEquals(false, appUserVendorUser.isActiveIndicator());
