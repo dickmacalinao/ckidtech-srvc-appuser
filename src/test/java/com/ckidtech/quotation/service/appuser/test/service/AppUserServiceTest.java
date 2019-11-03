@@ -37,9 +37,9 @@ public class AppUserServiceTest {
 	
 	public static AppUser MAIN_ADMIN = new AppUser("MAIN_ADMIN", "testpass", "Administrator", UserRole.APP_ADMIN, "VendorHub", "");
 	public static AppUser ADMIN_USER = new AppUser("ADMIN", "testpass", "Administrator", UserRole.APP_ADMIN, "VendorHub", "");
-	public static Vendor TEST_VENDOR = new Vendor("TEST_VENDOR", "Test Vendor", "imagelink", 2, 2, 2, 2);
-	public static Vendor TEST_VENDOR1 = new Vendor("TEST_VENDOR1", "Test Vendor 1", "imagelink", 2, 2, 2, 2);
-	public static Vendor TEST_VENDOR2 = new Vendor("TEST_VENDOR2", "Test Vendor 2", "imagelink", 2, 2, 2, 2);
+	public static Vendor TEST_VENDOR = new Vendor("TEST_VENDOR", "Test Vendor", "imagelink", 2, 2, 2);
+	public static Vendor TEST_VENDOR1 = new Vendor("TEST_VENDOR1", "Test Vendor 1", "imagelink", 2, 2, 2);
+	public static Vendor TEST_VENDOR2 = new Vendor("TEST_VENDOR2", "Test Vendor 2", "imagelink", 2, 2, 2);
 	
 	@Before
 	public  void initTest() {		
