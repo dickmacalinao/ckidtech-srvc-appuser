@@ -1,11 +1,13 @@
 package com.ckidtech.quotation.service.appuser.service;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -38,6 +40,9 @@ public class AppUserService {
 	
 	@Autowired
 	private MessageController msgController;
+	
+	@Autowired
+	private Environment env;
 	
 	/**
 	 * Get App User by ID
@@ -211,7 +216,7 @@ public class AppUserService {
 				appUser.setApp(loginUser.getApp());
 				appUser.setObjectRef(vendorId);
 				
-				Util.initalizeCreatedInfo(appUser, loginUser.getUsername(), msgController.getMsg("info.AURC"));					
+				Util.initalizeCreatedInfo(appUser, loginUser.getUsername(), msgController.getMsg("info.AURC"), ZoneId.of(env.getProperty("constant.zoneId")));					
 				appUserRepository.save(appUser);
 				
 				appUser.setPassword("[Protected]");
@@ -267,7 +272,7 @@ public class AppUserService {
 			
 			if( quotation.getMessages().isEmpty() ) {
 				
-				Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), appUserRep.getDifferences(appUser));	
+				Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), appUserRep.getDifferences(appUser), ZoneId.of(env.getProperty("constant.zoneId")));	
 				appUserRep.setActiveIndicator(appUser.isActiveIndicator());
 				appUserRep.setName(appUser.getName());
 				appUserRep.setRole(appUser.getRole());		
@@ -367,7 +372,7 @@ public class AppUserService {
 					}
 					
 					appUserRep.setActiveIndicator(true);
-					Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AURA"));
+					Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AURA"), ZoneId.of(env.getProperty("constant.zoneId")));
 					appUserRepository.save(appUserRep);
 					quotation.addMessage(msgController.createMsg("info.AURA"));				
 				}
@@ -419,7 +424,7 @@ public class AppUserService {
 					}
 					
 					appUserRep.setActiveIndicator(false);
-					Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AURDA"));
+					Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AURDA"), ZoneId.of(env.getProperty("constant.zoneId")));
 					appUserRepository.save(appUserRep);
 					quotation.addMessage(msgController.createMsg("info.AURDA"));				
 				}
@@ -523,7 +528,7 @@ public class AppUserService {
 				
 				appUserRep.setPassword(encoder.encode(newPassword));
 				
-				Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AUPR"));
+				Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AUPR"), ZoneId.of(env.getProperty("constant.zoneId")));
 				appUserRepository.save(appUserRep);
 				quotation.addMessage(msgController.createMsg("info.AUPR"));	
 				appUserRep.setPassword("[Protected]");
