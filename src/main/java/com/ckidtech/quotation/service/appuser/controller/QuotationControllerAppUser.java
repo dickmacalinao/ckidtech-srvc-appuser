@@ -69,10 +69,20 @@ public class QuotationControllerAppUser {
 		return new ResponseEntity<Object>(appUserService.updateAppUser(loginUser, appUser), HttpStatus.OK);		
 	}
 	
+	@RequestMapping(value = "/appadmin/generatePassword")
+	public ResponseEntity<Object> adminGeneratePassword(@RequestHeader("authorization") String authorization,
+			@PathVariable("appuserid") String appuserid) throws Exception {
+		LOG.log(Level.INFO, "Calling API /appadmin/generatePassword/" + appuserid + ")");	
+		
+		AppUser loginUser = new AppUser(authorization);
+		Util.checkAccessGrant(loginUser, UserRole.APP_ADMIN, null);
+		return new ResponseEntity<Object>(appUserService.generatePassword(loginUser, appuserid), HttpStatus.OK);		
+	}
+	
 	@RequestMapping(value = "/appadmin/deleteappuser/{appuserid}")
 	public ResponseEntity<Object> adminDeleteAppUser(@RequestHeader("authorization") String authorization,
 			@PathVariable("appuserid") String appuserid) throws Exception {
-		LOG.log(Level.INFO, "Calling API /appadmin/deleteappuser:" + appuserid + ")");		
+		LOG.log(Level.INFO, "Calling API /appadmin/deleteappuser/" + appuserid + ")");		
 		
 		AppUser loginUser = new AppUser(authorization);
 		Util.checkAccessGrant(loginUser, UserRole.APP_ADMIN, null);
@@ -149,6 +159,16 @@ public class QuotationControllerAppUser {
 		AppUser loginUser = new AppUser(authorization);
 		Util.checkAccessGrant(loginUser, UserRole.VENDOR_ADMIN, appUser.getObjectRef());	
 		return new ResponseEntity<Object>(appUserService.updateAppUser(loginUser, appUser), HttpStatus.OK);		
+	}
+	
+	@RequestMapping(value = "/vendoradmin/generatePassword")
+	public ResponseEntity<Object> vendorGeneratePassword(@RequestHeader("authorization") String authorization,
+			@PathVariable("appuserid") String appuserid) throws Exception {
+		LOG.log(Level.INFO, "Calling API /vendoradmin/generatePassword/" + appuserid + ")");	
+		
+		AppUser loginUser = new AppUser(authorization);
+		Util.checkAccessGrant(loginUser, UserRole.APP_ADMIN, null);
+		return new ResponseEntity<Object>(appUserService.generatePassword(loginUser, appuserid), HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/vendoradmin/deleteappuser/{appuserid}")

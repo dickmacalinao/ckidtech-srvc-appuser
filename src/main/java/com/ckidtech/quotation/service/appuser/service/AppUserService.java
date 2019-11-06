@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ckidtech.quotation.service.appuser.util.PasswordGenerator;
 import com.ckidtech.quotation.service.core.controller.MessageController;
 import com.ckidtech.quotation.service.core.controller.QuotationResponse;
 import com.ckidtech.quotation.service.core.dao.AppUserRepository;
@@ -152,9 +153,7 @@ public class AppUserService {
 		
 		// Validate mandatory fields
 		if ( appUser.getUsername()==null || "".equals(appUser.getUsername()) ) 
-			quotation.addMessage(msgController.createMsg("error.MFE", "User Name"));	
-		if ( appUser.getPassword()==null || "".equals(appUser.getPassword()) ) 
-			quotation.addMessage(msgController.createMsg("error.MFE", "Password"));
+			quotation.addMessage(msgController.createMsg("error.MFE", "User Name"));
 		if ( appUser.getName()==null || "".equals(appUser.getName()) ) 
 			quotation.addMessage(msgController.createMsg("error.MFE", "Name"));				
 		if ( appUser.getRole()==null )
@@ -202,10 +201,7 @@ public class AppUserService {
 			
 			if( quotation.getMessages().isEmpty() ) {
 				
-				BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-				
 				appUser.setId(null);
-				appUser.setPassword(encoder.encode(appUser.getPassword())); //encode password				
 				appUser.setRole(appUser.getRole());
 				appUser.setActiveIndicator(false);
 				appUser.setApp(loginUser.getApp());
@@ -280,6 +276,50 @@ public class AppUserService {
 				appUserRepository.save(appUserRep);
 				
 				appUserRep.setPassword("[Protected]");
+				quotation.setAppUser(appUserRep);	
+				
+				quotation.addMessage(msgController.createMsg("info.AURU"));
+				
+			}
+		}
+		
+		return quotation;
+			
+	}
+	
+	/**
+	 * Update App User
+	 * @param loginUser - Currently login user
+	 * @param appUser - App User object
+	 * @return
+	 */
+	public QuotationResponse generatePassword(AppUser loginUser, String userId) {		
+		LOG.log(Level.INFO, "Calling AppUser Service generatePassword()");
+		
+		Util.checkIfAlreadyActivated(loginUser);
+		
+		QuotationResponse quotation = new QuotationResponse();
+		
+		// Validate mandatory fields
+		if ( "".equals(userId) ) { 
+			quotation.addMessage(msgController.createMsg("error.MFE", "User ID"));
+		} else {
+			
+			AppUser appUserRep = appUserRepository.findById(userId).orElse(null);
+			// Verify if App User exists
+			if ( appUserRep==null ) {
+				quotation.addMessage(msgController.createMsg("error.AUNFE"));
+			} else {
+				
+				BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+				String generatedPassword = PasswordGenerator.generateRandomPassword(8);
+				
+				Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), "Password reset");	
+				appUserRep.setPassword(encoder.encode(generatedPassword));
+				
+				appUserRepository.save(appUserRep);
+				
+				appUserRep.setPassword(generatedPassword); // return the actual password and display to admin
 				quotation.setAppUser(appUserRep);	
 				
 				quotation.addMessage(msgController.createMsg("info.AURU"));

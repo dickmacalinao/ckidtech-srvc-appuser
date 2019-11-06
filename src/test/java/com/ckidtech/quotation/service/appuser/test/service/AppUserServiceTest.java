@@ -149,9 +149,8 @@ public class AppUserServiceTest {
 		
 		// Missing mandatory fields
 		QuotationResponse response = appUserService.addAppUser(MAIN_ADMIN, new AppUser("", "", "", null, "", ""));	
-		assertEquals(5, response.getMessages().size());
+		assertEquals(4, response.getMessages().size());
 		assertTrue("User Name is required.", response.getMessages().contains(new ReturnMessage("User Name is required.", ReturnMessage.MessageTypeEnum.ERROR)));
-		assertTrue("Password is required.", response.getMessages().contains(new ReturnMessage("Password is required.", ReturnMessage.MessageTypeEnum.ERROR)));
 		assertTrue("Name is required.", response.getMessages().contains(new ReturnMessage("Name is required.", ReturnMessage.MessageTypeEnum.ERROR)));
 		assertTrue("Role is required.", response.getMessages().contains(new ReturnMessage("Role is required.", ReturnMessage.MessageTypeEnum.ERROR)));
 		assertTrue("Object Reference is required.", response.getMessages().contains(new ReturnMessage("Object Reference is required.", ReturnMessage.MessageTypeEnum.ERROR)));
