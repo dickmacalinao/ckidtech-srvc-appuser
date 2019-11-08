@@ -346,7 +346,7 @@ public class AppUserService {
 
 		if (appUserId == null || "".equals(appUserId))
 			quotation.addMessage(msgController.createMsg("error.MFE", "AppUser ID"));
-
+		
 		if (quotation.getMessages().isEmpty()) {
 
 			AppUser appUserRep = appUserRepository.findById(appUserId).orElse(null);
@@ -358,10 +358,16 @@ public class AppUserService {
 				if ( UserRole.VENDOR_ADMIN.equals(loginUser.getRole()) && loginUser.getObjectRef()!=null && !loginUser.getObjectRef().equals(appUserRep.getObjectRef()) ) {
 					throw new ServiceAccessResourceFailureException();
 				}
+				
+				if ( appUserRep.getUsername().equalsIgnoreCase(loginUser.getUsername()) ) {
+					quotation.addMessage(msgController.createMsg("error.AUCDOU"));
+				} else {
+					appUserRepository.delete(appUserRep);
+					quotation.addMessage(msgController.createMsg("info.AURD"));
+					appUserRep.setPassword("[Protected]");
+				}
 			
-				appUserRepository.delete(appUserRep);
-				quotation.addMessage(msgController.createMsg("info.AURD"));
-				appUserRep.setPassword("[Protected]");
+				
 			}
 			
 			quotation.setAppUser(appUserRep);
@@ -527,48 +533,55 @@ public class AppUserService {
 
 	}
 	
-	public QuotationResponse resetPassword(AppUser loginUser, String appUserId, String newPassword) {
+	public QuotationResponse changePassword(AppUser loginUser, String oldPassword, String newPassword) {
 		
 		Util.checkIfAlreadyActivated(loginUser);
 		
 		QuotationResponse quotation = new QuotationResponse();
 		
-		if (appUserId == null || "".equals(appUserId))
-			quotation.addMessage(msgController.createMsg("error.MFE", "AppUser ID"));
+		if (oldPassword == null || "".equals(oldPassword))
+			quotation.addMessage(msgController.createMsg("error.MFE", "Old Password"));
 		if (newPassword == null || "".equals(newPassword))
-			quotation.addMessage(msgController.createMsg("error.MFE", "Password"));
+			quotation.addMessage(msgController.createMsg("error.MFE", "New Password"));
 
-		if (quotation.getMessages().isEmpty()) {
-
-			AppUser appUserRep = appUserRepository.findById(appUserId).orElse(null);
+		if (quotation.getMessages().isEmpty()) {	
+			
+			Pageable pageable = new PageRequest(0, 1000, Sort.Direction.ASC, "name");
+			List<AppUser> listUsers = appUserRepository.adminFindByAppAndUserName(loginUser.getApp(), loginUser.getUsername(), pageable);
+			
+			String userId = "";
+			if ( listUsers.size()> 0 ) {
+				userId = listUsers.get(0).getId(); 
+			}
+			
+			AppUser appUserRep = appUserRepository.findById(userId).orElse(null);
+			
+			
+			//LOG.log(Level.INFO, "***************** User:" + loginUser);
+			//LOG.log(Level.INFO, "***************** User:" + appUserRep);			
 
 			if (appUserRep == null) {
 				quotation.addMessage(msgController.createMsg("error.AUNFE"));
 			} else {	
 					
-				if ( UserRole.VENDOR_ADMIN.equals(loginUser.getRole()) 
-						&& loginUser.getObjectRef()!=null 
-						&& !loginUser.getObjectRef().equals(appUserRep.getObjectRef()) ) {
-					throw new ServiceAccessResourceFailureException();
-				}
-				
-				if ( UserRole.VENDOR_USER.equals(loginUser.getRole()) 
-						&& loginUser.getObjectRef()!=null 
-						&& !loginUser.getObjectRef().equals(appUserRep.getObjectRef()) 
-						&& !loginUser.getId().equals(appUserRep.getId())) {
-					throw new ServiceAccessResourceFailureException();
-				}
-				
+			
 				BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 				
-				appUserRep.setPassword(encoder.encode(newPassword));
+				// TODO: Need to compare old password
+				//if ( !encoder.encode(oldPassword).equals(appUserRep.getPassword()) ) {
+				//	quotation.addMessage(msgController.createMsg("error.AUIOP"));
+				//} else {
+					appUserRep.setPassword(encoder.encode(newPassword));
+					
+					Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AUPC"));
+					appUserRepository.save(appUserRep);
+					quotation.addMessage(msgController.createMsg("info.AUPR"));	
+					appUserRep.setPassword("[Protected]");
 				
-				Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AUPR"));
-				appUserRepository.save(appUserRep);
-				quotation.addMessage(msgController.createMsg("info.AUPR"));	
-				appUserRep.setPassword("[Protected]");
+					quotation.setAppUser(appUserRep);						
+				//}
+				
 			
-				quotation.setAppUser(appUserRep);				
 			}
 		}
 		return quotation;		

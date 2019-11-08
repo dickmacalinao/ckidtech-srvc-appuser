@@ -69,7 +69,7 @@ public class QuotationControllerAppUser {
 		return new ResponseEntity<Object>(appUserService.updateAppUser(loginUser, appUser), HttpStatus.OK);		
 	}
 	
-	@RequestMapping(value = "/appadmin/generatePassword")
+	@RequestMapping(value = "/appadmin/generatePassword/{appuserid}")
 	public ResponseEntity<Object> adminGeneratePassword(@RequestHeader("authorization") String authorization,
 			@PathVariable("appuserid") String appuserid) throws Exception {
 		LOG.log(Level.INFO, "Calling API /appadmin/generatePassword/" + appuserid + ")");	
@@ -109,15 +109,15 @@ public class QuotationControllerAppUser {
 		return new ResponseEntity<Object>(appUserService.deActivateAppUser(loginUser, appuserid), HttpStatus.OK);		
 	}
 	
-	@RequestMapping(value = "/appadmin/resetpassword/{appuserid}/{newpassword}")
-	public ResponseEntity<Object> adminResetPassword(@RequestHeader("authorization") String authorization,
-			@PathVariable("appuserid") String appuserid,
+	@RequestMapping(value = "/appadmin/changepassword/{oldpassword}/{newpassword}")
+	public ResponseEntity<Object> adminChangePassword(@RequestHeader("authorization") String authorization,
+			@PathVariable("oldpassword") String oldpassword,
 			@PathVariable("newpassword") String newpassword) throws Exception {
-		LOG.log(Level.INFO, "Calling API /appadmin/resetpassword/" + appuserid + ")");
+		LOG.log(Level.INFO, "Calling API /appadmin/changepassword");
 		
 		AppUser loginUser = new AppUser(authorization);
 		Util.checkAccessGrant(loginUser, UserRole.APP_ADMIN, null);
-		return new ResponseEntity<Object>(appUserService.resetPassword(loginUser, appuserid, newpassword), HttpStatus.OK);		
+		return new ResponseEntity<Object>(appUserService.changePassword(loginUser, oldpassword, newpassword), HttpStatus.OK);		
 	}
 	
 	// Vendor Services
@@ -161,13 +161,13 @@ public class QuotationControllerAppUser {
 		return new ResponseEntity<Object>(appUserService.updateAppUser(loginUser, appUser), HttpStatus.OK);		
 	}
 	
-	@RequestMapping(value = "/vendoradmin/generatePassword")
+	@RequestMapping(value = "/vendoradmin/generatePassword/{appuserid}")
 	public ResponseEntity<Object> vendorGeneratePassword(@RequestHeader("authorization") String authorization,
 			@PathVariable("appuserid") String appuserid) throws Exception {
 		LOG.log(Level.INFO, "Calling API /vendoradmin/generatePassword/" + appuserid + ")");	
 		
 		AppUser loginUser = new AppUser(authorization);
-		Util.checkAccessGrant(loginUser, UserRole.APP_ADMIN, null);
+		Util.checkAccessGrant(loginUser, UserRole.VENDOR_ADMIN, null);
 		return new ResponseEntity<Object>(appUserService.generatePassword(loginUser, appuserid), HttpStatus.OK);
 	}
 	
@@ -201,15 +201,28 @@ public class QuotationControllerAppUser {
 		return new ResponseEntity<Object>(appUserService.deActivateAppUser(loginUser, appuserid), HttpStatus.OK);		
 	}
 	
-	@RequestMapping(value = "/vendoradmin/resetpassword/{appuserid}/{newpassword}")
-	public ResponseEntity<Object> vendorResetPassword(@RequestHeader("authorization") String authorization,
-			@PathVariable("appuserid") String appuserid,
+	@RequestMapping(value = "/vendoradmin/changepassword/{oldpassword}/{newpassword}")
+	public ResponseEntity<Object> vendorChangePassword(@RequestHeader("authorization") String authorization,
+			@PathVariable("oldpassword") String oldpassword,
 			@PathVariable("newpassword") String newpassword) throws Exception {
-		LOG.log(Level.INFO, "Calling API /vendoradmin/resetpassword/" + appuserid + ")");
+		LOG.log(Level.INFO, "Calling API /vendoradmin/changepassword/");
 		
 		AppUser loginUser = new AppUser(authorization);
 		Util.checkAccessGrant(loginUser, UserRole.VENDOR_ADMIN, null);
-		return new ResponseEntity<Object>(appUserService.resetPassword(loginUser, appuserid, newpassword), HttpStatus.OK);		
+		return new ResponseEntity<Object>(appUserService.changePassword(loginUser, oldpassword, newpassword), HttpStatus.OK);		
+	}
+	
+	// Vendor Users
+	
+	@RequestMapping(value = "/vendoruser/changepassword/{oldpassword}/{newpassword}")
+	public ResponseEntity<Object> userChangePassword(@RequestHeader("authorization") String authorization,
+			@PathVariable("oldpassword") String oldpassword,
+			@PathVariable("newpassword") String newpassword) throws Exception {
+		LOG.log(Level.INFO, "Calling API /vendoruser/changepassword/");
+		
+		AppUser loginUser = new AppUser(authorization);
+		Util.checkAccessGrant(loginUser, UserRole.VENDOR_USER, null);
+		return new ResponseEntity<Object>(appUserService.changePassword(loginUser, oldpassword, newpassword), HttpStatus.OK);		
 	}
 			
 }
