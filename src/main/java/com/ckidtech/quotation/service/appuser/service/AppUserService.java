@@ -45,8 +45,8 @@ public class AppUserService {
 	 * @param id
 	 * @return
 	 */
-	public AppUser getAppUserById(String id) {
-		LOG.log(Level.INFO, "Calling Vendor Service getAppUserById()");
+	public AppUser getObjectById(String id) {
+		LOG.log(Level.INFO, "Calling AppUser Service getAppUserById()");
 		return appUserRepository.findById(id).orElse(null);
 	}
 	
@@ -244,7 +244,7 @@ public class AppUserService {
 			quotation.addMessage(msgController.createMsg("error.MFE", "Name"));				
 		if ( appUser.getRole()==null )
 			quotation.addMessage(msgController.createMsg("error.MFE", "Role"));
-		if ( UserRole.APP_ADMIN.equals(loginUser.getRole()) ) {
+		if ( !UserRole.APP_ADMIN.equals(appUser.getRole()) ) {
 			if ( appUser.getObjectRef()==null || "".equals(appUser.getObjectRef() ) )  // Vendor ID is required for Vendor and User Type
 				quotation.addMessage(msgController.createMsg("error.MFE", "Object Reference"));
 
@@ -263,22 +263,31 @@ public class AppUserService {
 			
 			if( quotation.getMessages().isEmpty() ) {
 				
-				Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), appUserRep.getDifferences(appUser));	
-				appUserRep.setActiveIndicator(appUser.isActiveIndicator());
-				appUserRep.setName(appUser.getName());
-				appUserRep.setRole(appUser.getRole());		
+				appUser.setApp(loginUser.getApp());
 				if ( UserRole.APP_ADMIN.equals(loginUser.getRole()) ) {
-					appUserRep.setObjectRef(appUser.getObjectRef());
+					appUser.setObjectRef(appUser.getObjectRef());
 				} else {
-					appUserRep.setObjectRef(loginUser.getObjectRef());
+					appUser.setObjectRef(loginUser.getObjectRef());
 				}	
 				
-				appUserRepository.save(appUserRep);
-				
-				appUserRep.setPassword("[Protected]");
-				quotation.setAppUser(appUserRep);	
-				
-				quotation.addMessage(msgController.createMsg("info.AURU"));
+				String changes = appUserRep.getDifferences(appUser);
+				if ( "No change.".equalsIgnoreCase(changes) ) {
+					quotation.addMessage(msgController.createMsg("warning.NCD"));
+				} else {
+					Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), changes);	
+					appUserRep.setActiveIndicator(appUser.isActiveIndicator());
+					appUserRep.setName(appUser.getName());
+					appUserRep.setRole(appUser.getRole());		
+					appUserRep.setApp(appUser.getApp());
+					appUserRep.setObjectRef(appUser.getObjectRef());
+					
+					appUserRepository.save(appUserRep);
+					
+					appUserRep.setPassword("[Protected]");
+					quotation.setAppUser(appUserRep);	
+					
+					quotation.addMessage(msgController.createMsg("info.AURU"));
+				}
 				
 			}
 		}
@@ -311,19 +320,24 @@ public class AppUserService {
 				quotation.addMessage(msgController.createMsg("error.AUNFE"));
 			} else {
 				
-				BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-				String generatedPassword = PasswordGenerator.generateRandomPassword(8);
-				
-				Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), "Password reset");	
-				appUserRep.setPassword(encoder.encode(generatedPassword));
-				
-				appUserRepository.save(appUserRep);
-				
-				appUserRep.setPassword(generatedPassword); // return the actual password and display to admin
-				quotation.setAppUser(appUserRep);	
-				
-				quotation.addMessage(msgController.createMsg("info.AURU"));
-				
+				if ( !appUserRep.isActiveIndicator() ) {
+					quotation.addMessage(msgController.createMsg("error.AUAUF"));
+				} else {
+					BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+					String generatedPassword = PasswordGenerator.generateRandomPassword(8);
+					
+					Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), "Password reset");	
+					appUserRep.setPassword(encoder.encode(generatedPassword));
+					
+					appUserRepository.save(appUserRep);
+					
+					appUserRep.setPassword(generatedPassword); // return the actual password and display to admin
+					quotation.setAppUser(appUserRep);	
+					
+					quotation.addMessage(msgController.createMsg("info.AUPR"));
+					
+				}		
+
 			}
 		}
 		
@@ -575,7 +589,7 @@ public class AppUserService {
 					
 					Util.initalizeUpdatedInfo(appUserRep, loginUser.getUsername(), msgController.getMsg("info.AUPC"));
 					appUserRepository.save(appUserRep);
-					quotation.addMessage(msgController.createMsg("info.AUPR"));	
+					quotation.addMessage(msgController.createMsg("info.AUPC"));	
 					appUserRep.setPassword("[Protected]");
 				
 					quotation.setAppUser(appUserRep);						

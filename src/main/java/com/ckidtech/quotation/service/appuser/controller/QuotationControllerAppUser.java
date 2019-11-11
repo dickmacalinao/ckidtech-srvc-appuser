@@ -120,6 +120,17 @@ public class QuotationControllerAppUser {
 		return new ResponseEntity<Object>(appUserService.changePassword(loginUser, oldpassword, newpassword), HttpStatus.OK);		
 	}
 	
+	@RequestMapping(value = "/appadmin/getappuserbyid/{appuserid}")
+	public ResponseEntity<Object> adminGetAppUserById(@RequestHeader("authorization") String authorization,
+			@PathVariable("appuserid") String appuserid) throws Exception {
+		LOG.log(Level.INFO, "Calling API /appadmin/getappuserbyid/" + appuserid + ")");
+		
+		AppUser loginUser = new AppUser(authorization);
+		Util.checkAccessGrant(loginUser, UserRole.APP_ADMIN, null);
+		return new ResponseEntity<Object>(appUserService.getObjectById(appuserid), HttpStatus.OK);		
+	}
+	
+	
 	// Vendor Services
 	
 	@RequestMapping(value = "/vendoradmin/findallappusers")
@@ -210,6 +221,16 @@ public class QuotationControllerAppUser {
 		AppUser loginUser = new AppUser(authorization);
 		Util.checkAccessGrant(loginUser, UserRole.VENDOR_ADMIN, null);
 		return new ResponseEntity<Object>(appUserService.changePassword(loginUser, oldpassword, newpassword), HttpStatus.OK);		
+	}
+	
+	@RequestMapping(value = "/vendoradmin/getappuserbyid/{appuserid}")
+	public ResponseEntity<Object> vendorGetAppUserById(@RequestHeader("authorization") String authorization,
+			@PathVariable("appuserid") String appuserid) throws Exception {
+		LOG.log(Level.INFO, "Calling API /vendoradmin/getappuserbyid/" + appuserid + ")");
+		
+		AppUser loginUser = new AppUser(authorization);
+		Util.checkAccessGrant(loginUser, UserRole.VENDOR_ADMIN, null);
+		return new ResponseEntity<Object>(appUserService.getObjectById(appuserid), HttpStatus.OK);		
 	}
 	
 	// Vendor Users
